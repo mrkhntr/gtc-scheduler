@@ -11,9 +11,10 @@
     Its important to keep tab open and computer not asleep for it to trigger at
     time specified. You can test by not toggling "Actually Make Reservation".
   </div>
-  <VueCountdown v-if="countdown !== null" :time="countdown"  :interval="100" v-slot="{ totalSeconds }"  @end="onCountdownEnd">
-    Time Remaining： {{ totalSeconds }} seconds.
+  <VueCountdown ref="countdown" v-if="countdown !== null" :time="countdown"  :interval="100" v-slot="{ totalSeconds }"  @end="onCountdownEnd">
+    Time Remaining： {{ totalSeconds }} seconds. With {{ retryCount }} attempts left
   </VueCountdown>
+  <span v-else> - - - No pending requests - - -</span>
   <iframe v-if="response" :srcdoc="response" />
   <FormGTC @requestTime="onSubmit"/>
 </template>
@@ -34,6 +35,7 @@ export default {
       error: null,
       countdown: null,
       toSend: null,
+      retryCount: 0,
       response: null,
     }
   },
@@ -55,6 +57,7 @@ export default {
           isConfirmed: values.isConfirmed,
         };
       console.log('Data to be sent', data);
+      this.retryCount = values.retryCount;
       this.toSend = () => axios.post(
         'https://uglte8qxlf.execute-api.us-east-1.amazonaws.com/dev/gtc/reserve', 
         data
@@ -63,11 +66,21 @@ export default {
     async onCountdownEnd() {
       try {
         console.log('attempting to send');
+        this.response = 'Sending Data ...'
         const result = await this.toSend();
-        alert('sent sucessfully, see result below');
         console.log(result);
         this.response = result.data;
+        this.countdown = null;
+        if (result.data?.includes("Reservation Completed") || result.data?.includes("Confirm")) {
+          alert("🎉 found something");
+        } else if (this.retryCount > 0) {
+          console.log(this.$refs.countdown)
+          this.retryCount--;
+          this.countdown = 2000;
+          this.$refs.countdown.start()
+        }
       } catch (error) {
+        this.response = JSON.stringify(error);
         alert(`Sending the request resulted in systamic error ${error.message}`)
       }
 

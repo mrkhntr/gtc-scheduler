@@ -8,6 +8,7 @@
             type="datetime-local"
             label="Time to execute"
             name="executeAt"
+            :step="1"
         />
         <FormKit
             type="text"
@@ -34,11 +35,13 @@
             name="intervalInMins"
             label="Interval In Mins"
             :options="[30, 45, 60, 90]"
+            validation="required"
         />
         <FormKit
             type="radio"
             label="Location to Reserve"
             name="locationToReserve"
+            validation="required"
             :options="{ 
                 1: 'Tennis', 
                 35: 'Pickleball / Mini Tennis',
@@ -56,6 +59,16 @@
             name="isConfirmed"
             label="Actually Make Reservation (over not reserving/testing)"
         />
+        <FormKit
+            type="number"
+            help="How many times should we retry?"
+            label="Retry Count"
+            name="retryCount"
+            value="0"
+            min="0"
+            max="10"
+            step="1"
+        />
     </FormKit>
 </template>
 
@@ -64,13 +77,6 @@
 
 export default {
     name: 'FormGTC',
-    data() {
-      return {
-        error: null,
-        countdown: null,
-        toSend: null,
-      }
-    },
     methods: {
       //values, {setSubmitting, setErrors, setStatus, resetForm}
         async saveMe(values) {
